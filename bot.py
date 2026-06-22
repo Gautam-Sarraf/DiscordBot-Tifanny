@@ -26,6 +26,7 @@ class TiffanyBot(commands.Bot):
         # For slash commands, default intents are sufficient.
         intents = discord.Intents.default()
         intents.guilds = True
+        intents.message_content = True
         
         super().__init__(
             command_prefix="!",  # Backup prefix, not primary as we use Slash commands

@@ -123,5 +123,66 @@ class AI(commands.Cog):
             
         await interaction.response.send_message(embed=embed)
 
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message) -> None:
+        """Listens for mentions or direct messages to reply using AI context."""
+        # Ignore messages sent by the bot itself to prevent infinite loops
+        if message.author.bot:
+            return
+            
+        # Check if the bot was mentioned OR if it is a private DM
+        is_dm = isinstance(message.channel, discord.DMChannel)
+        is_mentioned = self.bot.user in message.mentions
+        
+        if is_mentioned or is_dm:
+            content = message.content
+            # Replace the mention tag with empty string
+            mention_str = f"<@{self.bot.user.id}>"
+            mention_nick_str = f"<@!{self.bot.user.id}>"
+            prompt = content.replace(mention_str, "").replace(mention_nick_str, "").strip()
+            
+            # If the message only tagged the bot without any content
+            if not prompt:
+                await message.reply("Hey there! How can I help you today? Ask me anything! 😊")
+                return
+                
+            log.info(f"AI response triggered via mention/DM by {message.author} in {message.guild or 'DM'}. Prompt: '{prompt}'")
+            
+            try:
+                # Trigger typing indicator
+                async with message.channel.typing():
+                    # Gather discord metadata context details
+                    username = message.author.display_name
+                    server_name = message.guild.name if message.guild else "Direct Message"
+                    
+                    # Retrieve channel name safely
+                    if message.channel and hasattr(message.channel, "name"):
+                        channel_name = message.channel.name
+                    else:
+                        channel_name = "Private DM"
+                        
+                    timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
+
+                    # Call the async Gemini service via bot reference
+                    response_text = await self.bot.gemini_service.generate_response(
+                        user_id=message.author.id,
+                        prompt=prompt,
+                        username=username,
+                        server_name=server_name,
+                        channel_name=channel_name,
+                        timestamp=timestamp
+                    )
+                
+                # Send response as plain text to look like a normal user message
+                if len(response_text) > 1950:
+                    for i in range(0, len(response_text), 1950):
+                        await message.reply(content=response_text[i:i+1950])
+                else:
+                    await message.reply(content=response_text)
+                    
+            except Exception as e:
+                log.error(f"Error handling AI mention/DM response: {e}", exc_info=True)
+                await message.reply("Oops! I hit a snag trying to process that. Try again in a bit! 😅")
+
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(AI(bot))
