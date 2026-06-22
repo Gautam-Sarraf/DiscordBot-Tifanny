@@ -113,14 +113,26 @@ class GeminiService:
             logger.debug(f"Sending prompt to Gemini for user {user_id} (History depth: {len(user_history)})")
             
             # Make the async API request using client.aio
-            # We use gemma-4-31b-it as the correct instruction-tuned free-tier model
-            response = await self.client.aio.models.generate_content(
-                model="gemma-4-31b-it",
-                contents=contents,
-                config=config
-            )
-            
-            response_text = response.text
+            # We use gemma-4-31b-it as the primary model
+            try:
+                response = await self.client.aio.models.generate_content(
+                    model="gemma-4-31b-it",
+                    contents=contents,
+                    config=config
+                )
+                response_text = response.text
+            except Exception as primary_error:
+                logger.warning(
+                    f"Primary model gemma-4-31b-it failed ({primary_error}). "
+                    "Attempting fallback to gemini-2.5-flash (free tier)..."
+                )
+                # Attempt fallback with the highly stable gemini-2.5-flash (also free tier)
+                response = await self.client.aio.models.generate_content(
+                    model="gemini-2.5-flash",
+                    contents=contents,
+                    config=config
+                )
+                response_text = response.text
             if not response_text:
                 response_text = "I received an empty response. Please try rephrasing your question."
             
