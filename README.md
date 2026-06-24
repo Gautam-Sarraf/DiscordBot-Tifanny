@@ -1,12 +1,13 @@
 # Tiffany Bot 🌸
 
-Tiffany Bot is a modern, modular, production-ready Discord bot written in Python 3.12 utilizing the `discord.py` framework and integrated with Google's Gemini AI.
+Tiffany Bot is a modern, modular, production-ready Discord bot written in Python 3.12 utilizing the `discord.py` framework and integrated with Ollama (primary, using `gemma3-amoral:latest`) and Google's Gemini AI (fallback).
 
 ## Features
 - **Slash Commands**: Complete slash command support (`/ping`, `/hello`, `/health`, `/ask`, `/clear`, `/persona`).
-- **Google Gemini Integration**: Dynamic async queries to the `gemini-2.5-flash` model with system persona instructions and sliding-window conversation memory.
+- **Ollama Integration with Gemini Fallback**: Prioritizes local Ollama inference (using the unrestricted `gemma3-amoral:latest` model) for chatting, with automatic fallback to Google Gemini (`gemini-2.5-flash` / `gemma-4-31b-it`) in case of server timeouts or connection issues.
+- **Dynamic Persona & Memory**: Features sliding-window conversation memory and custom system instructions (e.g. customized flirty response behavior for the server owner).
 - **Diagnostics**: Health check and telemetry stats using `psutil`.
-- **Clean Logging**: dual-logging to colorized console output and `data/bot.log`.
+- **Clean Logging**: Dual-logging to colorized console output and `data/bot.log`.
 - **Modular Design**: Structured using Python package patterns and discord.py Cogs.
 
 ---
@@ -27,7 +28,7 @@ tiffany-bot/
 │
 ├── services/               # Core business services
 │   ├── __init__.py
-│   ├── gemini_service.py   # Gemini AI client wrapper
+│   ├── gemini_service.py   # Ollama & Gemini AI service wrapper
 │   └── config.py           # Configuration loader and validator
 │
 ├── utils/                  # Common utilities
@@ -70,7 +71,7 @@ pip install -r requirements.txt
 ```
 
 ### 5. Configure Credentials
-Copy `.env.example` to `.env` (if not already done) and insert your Discord Bot Token and Google Gemini API Key:
+Copy `.env.example` to `.env` (if not already done) and insert your Discord Bot Token, Google Gemini API Key, and Ollama configuration:
 ```bash
 cp .env.example .env
 ```
@@ -80,6 +81,11 @@ DISCORD_BOT_TOKEN=your_token_here
 GEMINI_API_KEY=your_gemini_key_here
 LOG_LEVEL=INFO
 ENVIRONMENT=development
+
+# Ollama Configuration
+USE_OLLAMA=true
+OLLAMA_MODEL=gemma3-amoral:latest
+OLLAMA_HOST=http://localhost:11434
 ```
 
 > [!IMPORTANT]
