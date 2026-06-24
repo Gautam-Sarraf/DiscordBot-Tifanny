@@ -16,6 +16,12 @@ class Config:
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO").upper()
     ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development").lower()
     
+    # Ollama settings
+    USE_OLLAMA: bool = os.getenv("USE_OLLAMA", "false").lower() == "true"
+    OLLAMA_MODEL: str = os.getenv("OLLAMA_MODEL", "gemma3:1b")
+    OLLAMA_HOST: str = os.getenv("OLLAMA_HOST", "http://localhost:11434")
+
+    
     # Paths
     DATA_DIR: Path = BASE_DIR / "data"
     LOG_FILE: Path = DATA_DIR / "bot.log"
